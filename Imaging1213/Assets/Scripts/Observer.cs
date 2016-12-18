@@ -1,11 +1,8 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Xml.Schema;
 using UnityEngine;
-using System.Linq;
 using ExternalDLL;
-using UnityEngine.SocialPlatforms.GameCenter;
 
 public class Observer : MonoBehaviour
 {

@@ -79,6 +79,9 @@
     <Reference Include="UnityEditor">
       <HintPath>Library\UnityAssemblies\UnityEditor.dll</HintPath>
     </Reference>
+    <Reference Include="KGFUtils.Settings">
+      <HintPath>Assets\kolmich\KGFCore\KGFUtility\KGFUtils.Settings.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\Act.cs" />
@@ -96,6 +99,46 @@
     <Compile Include="Assets\Scripts\TestDll.cs" />
     <Compile Include="Assets\Scripts\VRSursor.cs" />
     <Compile Include="Assets\Scripts\Viewer.cs" />
+    <Compile Include="Assets\kolmich\KGFCore\KGFAccessor\scripts\KGFAccessor.cs" />
+    <Compile Include="Assets\kolmich\KGFCore\KGFCustomGUI\scripts\KGFCustomGUI.cs" />
+    <Compile Include="Assets\kolmich\KGFCore\KGFCustomGUI\scripts\KGFCustomGUITutorial.cs" />
+    <Compile Include="Assets\kolmich\KGFCore\KGFCustomGUI\scripts\interfaces\KGFICustomGUI.cs" />
+    <Compile Include="Assets\kolmich\KGFCore\KGFCustomGUI\scripts\interfaces\KGFICustomInspectorGUI.cs" />
+    <Compile Include="Assets\kolmich\KGFCore\KGFEvent\scripts\KGFEvent.cs" />
+    <Compile Include="Assets\kolmich\KGFCore\KGFEvent\scripts\KGFEventBase.cs" />
+    <Compile Include="Assets\kolmich\KGFCore\KGFEvent\scripts\KGFEventSequence.cs" />
+    <Compile Include="Assets\kolmich\KGFCore\KGFFPSDisplay\scripts\KGFFPSDisplay.cs" />
+    <Compile Include="Assets\kolmich\KGFCore\KGFGUIRenderer\scripts\KGFGUIRenderer.cs" />
+    <Compile Include="Assets\kolmich\KGFCore\KGFGUIRenderer\scripts\interfaces\KGFIGui2D.cs" />
+    <Compile Include="Assets\kolmich\KGFCore\KGFGUIUtility\scripts\KGFGUIUtility.cs" />
+    <Compile Include="Assets\kolmich\KGFCore\KGFGUIUtility\scripts\KGFGUIUtilityTutorial.cs" />
+    <Compile Include="Assets\kolmich\KGFCore\KGFGUIUtility\scripts\controls\KGFGUIDataTable.cs" />
+    <Compile Include="Assets\kolmich\KGFCore\KGFGUIUtility\scripts\controls\KGFGUIDropDown.cs" />
+    <Compile Include="Assets\kolmich\KGFCore\KGFGUIUtility\scripts\controls\KGFGUIObjectList.cs" />
+    <Compile Include="Assets\kolmich\KGFCore\KGFGUIUtility\scripts\controls\KGFGUISelectionList.cs" />
+    <Compile Include="Assets\kolmich\KGFCore\KGFGUIUtility\scripts\interfaces\KGFIControl.cs" />
+    <Compile Include="Assets\kolmich\KGFCore\KGFLogic\scripts\KGFLogicAnalyzer.cs" />
+    <Compile Include="Assets\kolmich\KGFCore\KGFModule\scripts\KGFModule.cs" />
+    <Compile Include="Assets\kolmich\KGFCore\KGFScreen\scripts\KGFScreen.cs" />
+    <Compile Include="Assets\kolmich\KGFCore\KGFUtility\scripts\KGFUtility.cs" />
+    <Compile Include="Assets\kolmich\KGFCore\scripts\IDReference.cs" />
+    <Compile Include="Assets\kolmich\KGFCore\scripts\KGFCoreVersion.cs" />
+    <Compile Include="Assets\kolmich\KGFCore\scripts\KGFDataTable.cs" />
+    <Compile Include="Assets\kolmich\KGFCore\scripts\KGFDelegate.cs" />
+    <Compile Include="Assets\kolmich\KGFCore\scripts\KGFDocumentation.cs" />
+    <Compile Include="Assets\kolmich\KGFCore\scripts\KGFEventExpose.cs" />
+    <Compile Include="Assets\kolmich\KGFCore\scripts\KGFGlobals.cs" />
+    <Compile Include="Assets\kolmich\KGFCore\scripts\KGFITaggable.cs" />
+    <Compile Include="Assets\kolmich\KGFCore\scripts\KGFIValidator.cs" />
+    <Compile Include="Assets\kolmich\KGFCore\scripts\KGFMessageList.cs" />
+    <Compile Include="Assets\kolmich\KGFCore\scripts\KGFObject.cs" />
+    <Compile Include="Assets\kolmich\KGFCore\scripts\KGFString.cs" />
+    <Compile Include="Assets\kolmich\KGFDebug\scripts\KGFDebug.cs" />
+    <Compile Include="Assets\kolmich\KGFDebug\scripts\KGFDebugFile.cs" />
+    <Compile Include="Assets\kolmich\KGFDebug\scripts\KGFDebugGUI.cs" />
+    <Compile Include="Assets\kolmich\KGFDebug\scripts\KGFDebugLoggerTutorial.cs" />
+    <Compile Include="Assets\kolmich\KGFDebug\scripts\KGFDebugTutorial.cs" />
+    <Compile Include="Assets\kolmich\KGFDebug\scripts\interfaces\KGFIDebug.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Shaders\LeapPinchLine.shader" />
@@ -104,6 +147,9 @@
     <None Include="Assets\Shaders\SkinShader.shader" />
     <None Include="Assets\Shaders\Transparent.shader" />
     <None Include="Assets\Shaders\handyskin.shader" />
+    <None Include="Assets\kolmich\KGFCore\readme.txt" />
+    <None Include="Assets\kolmich\KGFDebug\readme.txt" />
+    <None Include="Assets\kolmich\Resources\KGFSkins\default\readme.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="GenerateTargetFrameworkMonikerAttribute" />
