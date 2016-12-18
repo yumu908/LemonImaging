@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using ExternalDLL;
+using UnityEditor;
 
 public class Observer : MonoBehaviour
 {
@@ -34,24 +35,24 @@ public class Observer : MonoBehaviour
         mat = hand.GetComponentInChildren<MeshRenderer>().material;
         slideOriginPos = SlideTran.localPosition;
         isEnterSlide = false;
-        hand.SetActive(false);
-        viewer = new Viewer();
-        viewer.Start();
+        //hand.SetActive(false);
+        //viewer = new Viewer();
+        //viewer.Start();
     }
     void Update()
     {
-        FrameInfoKey key = viewer.OnUpdate();
-        if (key != null)
+        //FrameInfoKey key = viewer.OnUpdate();
+        //if (key != null)
         {
             if (!hand.activeSelf)
             {
                 hand.SetActive(true);
             }
 
-            Vector3 center = key.center;
+            Vector3 center = test;  //key.center;
             Debug.Log(center);
 
-            bool flag = key.fingerNum > 0;
+            bool flag = true; //key.fingerNum > 0;
             Color c = argus.GetColor(transform.position.z);
             mat.SetColor("_Color", c);
 
@@ -96,7 +97,7 @@ public class Observer : MonoBehaviour
 
                 if (argus.isInMiddle(transform.position.z))
                 {
-                   Media(key);
+                  // Media(key);
                 }
             }
         }
@@ -156,8 +157,8 @@ public class Observer : MonoBehaviour
 
     }
 
-    void OnDestroy()
-    {
-        viewer.OnStop();
-    }
+    //////void OnDestroy()
+    //////{
+    //////    viewer.OnStop();
+    //////}
 }
