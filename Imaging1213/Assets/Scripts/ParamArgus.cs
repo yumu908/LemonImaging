@@ -25,6 +25,8 @@ public class ParamArgus
     [Range(0, 100)]
     public float backScope;
 
+    //间隔
+    public float margin;
 
     // 手套 z方向 分界点 separate0 > separate1 > separate2;
     public float maxZ
@@ -32,32 +34,35 @@ public class ParamArgus
         get { return BackPos.z; }
     }
 
-    public Color color0 = Color.green;
-
-    public float midZ;
-
-
-    public Color color1 = Color.blue;
-
-    // 滑块Z轴活动范围
-    [Range(0, 100)]
-    public float midZScope;
-
     public float minZ
     {
         get { return FrontPos.z; }
     }
 
-    public Color color2 = Color.yellow;
+    public Color frontColor = Color.green;
+
+    public float mediaPos;
+    public float mediaScope;
+    public Color mediaColor = Color.blue;
+
+
+    public float slidePos;
+    public float slideScope;
+    public Color slideColor = Color.yellow;
+
+    public Color backColor = Color.cyan;
+  
 
     //U3D中对应的X最大和最小值
     public float maxX;
     public float minX;
 
-
     public float xMid
     {
-        get { return (left + right)/2; }
+        get
+        {
+            return (right + left) / 2;
+        }
     }
 
     public float Depth
@@ -90,21 +95,26 @@ public class ParamArgus
 
         if (z < minZ)
         {
-            return color0;
+            return frontColor;
         }
-        else if (z < midZ)
+        else if (z < mediaPos)
         {
-            float t = (z - minZ) /(midZ - minZ);
-            return Color.Lerp(color0, color1, t);
+            float t = (z - minZ) /(mediaPos - minZ);
+            return Color.Lerp(frontColor, mediaColor, t);
+        }
+        else if (z < slidePos)
+        {
+            float t = (z - mediaPos) / (slidePos - mediaPos);
+            return Color.Lerp(mediaColor, slideColor, t);
         }
         else if (z < maxZ)
         {
-            float t = (z - midZ)/(maxZ - midZ);
-            return Color.Lerp(color1, color2, t);
+            float t = (z - slidePos)/(maxZ - slidePos);
+            return Color.Lerp(slideColor, backColor, t);
         }
         else
         {
-            return color2;
+            return backColor;
         }
       
     }
@@ -124,11 +134,18 @@ public class ParamArgus
 
     public bool isInBack(float z)
     {
-        return  z <= back && z >= back - backScope;
+        return  z <= maxZ && z >= maxZ - backScope;
     }
 
-    public bool isInMiddle(float z)
+    public bool isInSlide(float z)
     {
-        return z > midZ - midZScope && z <= midZ;
+        return z >= slidePos - slideScope && z <= slidePos;
     }
+
+    public bool isInMedia(float z)
+    {
+        return z >= mediaPos - mediaScope && z <= mediaPos;
+    }
+
+    
 }

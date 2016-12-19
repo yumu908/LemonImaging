@@ -9,8 +9,10 @@ public class Observer : MonoBehaviour
 {
     #region public
     public GameObject hand;
+    public Transform picTran;
     public Transform SlideTran;
     public Vector3 test = Vector3.zero;
+    public bool testFlag = false;
     public ParamArgus argus = new ParamArgus();
     public MoviePlayer moviePlayer;
 
@@ -21,6 +23,9 @@ public class Observer : MonoBehaviour
     private Material mat;
     private Vector3 slideOriginPos;
     private bool isEnterSlide;
+    private bool Catched;
+    private bool playFlag;
+    private Vector3 PicTranPos;
     #endregion
 
 
@@ -35,24 +40,28 @@ public class Observer : MonoBehaviour
         mat = hand.GetComponentInChildren<MeshRenderer>().material;
         slideOriginPos = SlideTran.localPosition;
         isEnterSlide = false;
-        //hand.SetActive(false);
-        //viewer = new Viewer();
-        //viewer.Start();
+
+        PicTranPos = picTran.position;
+        Catched = false;
+        playFlag = false;
+        hand.SetActive(false);
+        viewer = new Viewer();
+        viewer.Start();
     }
     void Update()
     {
-        //FrameInfoKey key = viewer.OnUpdate();
-        //if (key != null)
+        FrameInfoKey key = viewer.OnUpdate();
+        if (key != null)
         {
             if (!hand.activeSelf)
             {
                 hand.SetActive(true);
             }
 
-            Vector3 center = test;  //key.center;
+            Vector3 center = key.center;
             Debug.Log(center);
 
-            bool flag = true; //key.fingerNum > 0;
+            bool flag = key.fingerNum > 0;
             Color c = argus.GetColor(transform.position.z);
             mat.SetColor("_Color", c);
 
@@ -64,42 +73,86 @@ public class Observer : MonoBehaviour
 
             mat.SetColor("_OutlineColor", new Color32(255, 100, 0, 255));
 
-            if (isEnterSlide)
+            //if (isEnterSlide)
+            //{
+            //    float x = argus.GetX(center.x);
+            //    transform.position = new Vector3(x, argus.BackPos.y, argus.BackPos.z);
+            //    SlideTran.transform.localPosition = slideOriginPos + transform.position.x * 20 * Vector3.right;
+            //    SetCamera(false);
+            //    isEnterSlide = argus.isInBack(center.z);
+            //}
+            //else
+            //{
+            //    float z = argus.GetZ(center.z);
+            //    if (argus.isInBack(center.z))
+            //    {
+            //        isEnterSlide = true;
+            //        float x = argus.GetX(center.x);
+            //        transform.position = new Vector3(x, argus.BackPos.y, argus.BackPos.z); 
+            //        SlideTran.transform.localPosition = slideOriginPos + transform.position.x * 20 * Vector3.right;
+            //        SetCamera(false);
+            //    }
+            //    else if(argus.isInLast(center.z))
+            //    {
+            //        isEnterSlide = false;
+            //        transform.position = new Vector3(argus.FrontPos.x, argus.FrontPos.y, z);
+            //        SetCamera(true);
+            //    }
+            //    else if (center.z <= argus.front)
+            //    {
+                    
+            //    }
+
+            //    if (transform.position.z <= argus.minZ)
+            //    {
+            //        transform.position = argus.FrontPos;
+            //    }
+
+            //    if (argus.isInMiddle(transform.position.z))
+            //    {
+            //      // Media(key);
+            //    }
+
+            //}
+
+            float z = argus.GetZ(center.z);
+            if (argus.isInSlide(z))
             {
                 float x = argus.GetX(center.x);
-                transform.position = new Vector3(x, argus.BackPos.y, argus.BackPos.z);
+                transform.position = new Vector3(x, argus.BackPos.y, argus.slidePos);
                 SlideTran.transform.localPosition = slideOriginPos + transform.position.x * 20 * Vector3.right;
                 SetCamera(false);
-                isEnterSlide = argus.isInBack(center.z);
             }
-            else
+            else if (argus.isInMedia(z))
             {
-                float z = argus.GetZ(center.z);
-                if (z >= argus.BackPos.z - 2)
+                transform.position = new Vector3(argus.FrontPos.x, argus.FrontPos.y, argus.mediaPos);
+                Media(key);
+            }
+            else if (argus.isInBack(z))
+            {
+                transform.position = new Vector3(argus.FrontPos.x, argus.FrontPos.y, argus.maxZ);
+
+                if (Catched)
                 {
-                    isEnterSlide = true;
-                    float x = argus.GetX(center.x);
-                    transform.position = new Vector3(x, argus.BackPos.y, argus.BackPos.z); 
-                    SlideTran.transform.localPosition = slideOriginPos + transform.position.x * 20 * Vector3.right;
-                    SetCamera(false);
+                    Catched = key.fingerNum <= 0;
                 }
                 else
                 {
-                    isEnterSlide = false;
-                    transform.position = new Vector3(argus.FrontPos.x, argus.FrontPos.y, z);
-                    SetCamera(true);
-                }
-
-                if (transform.position.z <= argus.minZ)
-                {
-                    transform.position = argus.FrontPos;
-                }
-
-                if (argus.isInMiddle(transform.position.z))
-                {
-                  // Media(key);
+                    Catched = key.fingerNum > 0;
                 }
             }
+            else
+            {
+                bool active = z <= argus.slidePos + 1;
+                SlideTran.root.gameObject.SetActive(active);
+                transform.position = new Vector3(argus.FrontPos.x, argus.FrontPos.y, z);
+        //        canvasRect.sizeDelta = canvasOriginSize;
+                SetCamera(true);
+            }
+
+            Debug.LogError(Catched);
+            Grasp(key);
+            //  Grasp(key);
         }
 
 
@@ -107,7 +160,16 @@ public class Observer : MonoBehaviour
 
     private void Media(FrameInfoKey key)
     {
-        if (key.fingerNum > 0)
+        if (playFlag)
+        {
+            playFlag = key.fingerNum <= 0;
+        }
+        else
+        {
+            playFlag = key.fingerNum > 0;
+        }
+ 
+        if (playFlag)
         {
             moviePlayer.Play(true);
             moviePlayer.PlayAudio(true);
@@ -137,6 +199,38 @@ public class Observer : MonoBehaviour
         //}
     }
 
+    private void Grasp(FrameInfoKey key)
+    {
+        if (Catched)
+        {
+            Catched = key.fingerNum <= 0;
+        }
+
+        if (Catched)
+        {
+            picTran.position = Camera.main.transform.position + argus.margin*Vector3.forward;
+        }
+        else
+        {
+            StartCoroutine(Recover());
+        }
+    }
+
+    private IEnumerator Recover()
+    {
+        float time = 0;
+
+        float offset = (PicTranPos - picTran.position).z;
+        float speed =  80 / offset;
+        while (time <= 1)
+        {
+            time += speed * Time.deltaTime;
+            picTran.position = Vector3.Lerp(picTran.position, PicTranPos, time);
+            yield return null;
+        }
+        
+    }
+
     private void SetCamera(bool hasParent)
     {
         if (hasParent)
@@ -149,7 +243,7 @@ public class Observer : MonoBehaviour
         else
         {
             Camera.main.transform.SetParent(null);
-            Camera.main.transform.localPosition = new Vector3(-20.8f, 7.465f, 3.85f);
+            Camera.main.transform.localPosition = new Vector3(-20.8f, 7.465f, 0);
             Camera.main.transform.localRotation = Quaternion.Euler(0.724f, 1.308f, 0);
             Camera.main.transform.localScale = 0.20f * Vector3.one;
         }
@@ -157,8 +251,8 @@ public class Observer : MonoBehaviour
 
     }
 
-    //////void OnDestroy()
-    //////{
-    //////    viewer.OnStop();
-    //////}
+    void OnDestroy()
+    {
+        viewer.OnStop();
+    }
 }
