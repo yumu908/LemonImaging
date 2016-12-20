@@ -39,6 +39,7 @@ namespace ExternalDLL
 
         public FrameInfoKey OnUpdate()
         {
+            Debug.LogError(thread.ThreadState);
             if (queue.Count > 0)
             {
                return queue.Dequeue();

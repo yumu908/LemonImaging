@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using ExternalDLL;
-using UnityEditor;
 
 public class Observer : MonoBehaviour
 {
@@ -26,6 +25,9 @@ public class Observer : MonoBehaviour
     private bool Catched;
     private bool playFlag;
     private Vector3 PicTranPos;
+    private float offset;
+
+    private Animator animator;
     #endregion
 
 
@@ -40,8 +42,9 @@ public class Observer : MonoBehaviour
         mat = hand.GetComponentInChildren<MeshRenderer>().material;
         slideOriginPos = SlideTran.localPosition;
         isEnterSlide = false;
-
+        offset = picTran.position.z - argus.maxZ;
         PicTranPos = picTran.position;
+        animator = picTran.GetComponent<Animator>();
         Catched = false;
         playFlag = false;
         hand.SetActive(false);
@@ -132,13 +135,10 @@ public class Observer : MonoBehaviour
             {
                 transform.position = new Vector3(argus.FrontPos.x, argus.FrontPos.y, argus.maxZ);
 
-                if (Catched)
+                if (!Catched)
                 {
-                    Catched = key.fingerNum <= 0;
-                }
-                else
-                {
-                    Catched = key.fingerNum > 0;
+                    Catched = key.fingerNum <= 2;
+                    CatchAct();
                 }
             }
             else
@@ -146,11 +146,10 @@ public class Observer : MonoBehaviour
                 bool active = z <= argus.slidePos + 1;
                 SlideTran.root.gameObject.SetActive(active);
                 transform.position = new Vector3(argus.FrontPos.x, argus.FrontPos.y, z);
-        //        canvasRect.sizeDelta = canvasOriginSize;
                 SetCamera(true);
             }
 
-            Debug.LogError(Catched);
+            Debug.LogError(Catched + "              " + key.fingerNum);
             Grasp(key);
             //  Grasp(key);
         }
@@ -160,14 +159,7 @@ public class Observer : MonoBehaviour
 
     private void Media(FrameInfoKey key)
     {
-        if (playFlag)
-        {
-            playFlag = key.fingerNum <= 0;
-        }
-        else
-        {
-            playFlag = key.fingerNum > 0;
-        }
+        playFlag = !playFlag || key.fingerNum <= 0;
  
         if (playFlag)
         {
@@ -203,12 +195,13 @@ public class Observer : MonoBehaviour
     {
         if (Catched)
         {
-            Catched = key.fingerNum <= 0;
+            Catched = key.fingerNum <= 2;
         }
 
         if (Catched)
         {
-            picTran.position = Camera.main.transform.position + argus.margin*Vector3.forward;
+            picTran.position = PicTranPos - offset * Vector3.forward;
+     
         }
         else
         {
@@ -228,7 +221,15 @@ public class Observer : MonoBehaviour
             picTran.position = Vector3.Lerp(picTran.position, PicTranPos, time);
             yield return null;
         }
-        
+
+        animator.SetBool("Flag", true);
+
+    }
+
+    private void CatchAct()
+    {
+        animator.SetBool("Flag", false);
+        animator.SetTrigger("Trigger");
     }
 
     private void SetCamera(bool hasParent)
