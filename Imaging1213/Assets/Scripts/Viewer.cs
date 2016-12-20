@@ -5,7 +5,6 @@ using System.Runtime.InteropServices;
 using System;
 using System.Linq;
 using System.Threading;
-using UGUIExtension;
 
 namespace ExternalDLL
 {
@@ -25,21 +24,24 @@ namespace ExternalDLL
         public delegate void Callback(FrameInfo frameInfo);
 
         public Queue<FrameInfoKey> queue;
-        private Thread thread;
         private bool flag;
 
         public void Start()
         {
             queue = new Queue<FrameInfoKey>(30);
             flag = true;
-            thread = new Thread(ToListener);
-            thread.Start();
+            ThreadPool.QueueUserWorkItem(ToListener);
         }
 
 
         public FrameInfoKey OnUpdate()
         {
-            Debug.LogError(thread.ThreadState);
+            //while (thread.ThreadState == ThreadState.Stopped)
+            //{
+            //    thread.Start();
+            //}
+
+
             if (queue.Count > 0)
             {
                return queue.Dequeue();
@@ -50,12 +52,13 @@ namespace ExternalDLL
 
 
 
-        private void ToListener()
+        private void ToListener(object obj)
         {
-            while (flag)
+            StartListener(Collect, 5000);
+            Thread.Sleep(10);
+            if (flag)
             {
-                StartListener(Collect, 5000);
-                Thread.Sleep(10);
+                ThreadPool.QueueUserWorkItem(ToListener);
             }
         }
 
@@ -85,10 +88,6 @@ namespace ExternalDLL
         {
             flag = false;
             Thread.Sleep(10);
-            if (thread.IsAlive)
-            {
-                thread.Abort();
-            }
         }
        
     }

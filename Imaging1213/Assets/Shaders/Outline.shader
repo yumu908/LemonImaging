@@ -1,6 +1,6 @@
 ﻿Shader "Custom/Outline" {
 	Properties{
-		_Outline("Outline width", Range(.005, 0.2)) = .005
+		_Outline("Outline width", Range(.001, 0.2)) = .005
 		_Glossiness("Smoothness", Range(0,1)) = 0.5
 		_Metallic("Metallic", Range(0,1)) = 0.0
 		_Color("Main Color", Color) = (.5,.5,.5,1)
