@@ -139,7 +139,7 @@ public class ParamArgus
 
     public bool isInSlide(float z)
     {
-        return z >= slidePos - slideScope && z <= slidePos + slideScope;
+        return z >= slidePos - slideScope && z <= slidePos;
     }
 
     public bool isInMedia(float z)
