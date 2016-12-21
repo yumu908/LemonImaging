@@ -22,9 +22,18 @@ public class Observer : MonoBehaviour
     private Material mat;
     private Vector3 slideOriginPos;
     private bool isEnterSlide;
-    public bool Catched;
-    public bool isReleased;
-    public bool playFlag;
+
+    public int playCode;
+    public bool playLocked;
+
+    public int slideCode;
+    public bool slideLocked;
+
+    public int graspCode;
+    public bool graspLocked;
+    public bool graspReleasing;
+    public bool grasping;
+
     private Vector3 PicTranPos;
     private float offset;
 
@@ -46,9 +55,18 @@ public class Observer : MonoBehaviour
         offset = picTran.position.z - argus.maxZ;
         PicTranPos = picTran.position;
         animator = picTran.GetComponent<Animator>();
-        Catched = false;
-        playFlag = false;
-        isReleased = true;
+
+        playCode = 0;
+        playLocked = false;
+
+        slideCode = 0;
+        slideLocked = false;
+
+        graspCode = 0;
+        graspLocked = false;
+        graspReleasing = false;
+
+
         hand.SetActive(false);
         viewer = new Viewer();
         viewer.Start();
@@ -78,22 +96,63 @@ public class Observer : MonoBehaviour
 
             mat.SetColor("_OutlineColor", new Color32(255, 100, 0, 255));
             float z = argus.GetZ(center.z);
+
+            int sign = key.fingerNum > 0 ? 1 : 0;
             if (argus.isInSlide(z))
             {
                 float x = argus.GetX(center.x);
                 transform.position = new Vector3(x, argus.BackPos.y, argus.slidePos);
+
+                bool translateFlag = ((slideCode & 0x1) ^ sign) == 1;
+                if(translateFlag)
+                {
+                    slideCode = ((slideCode << 1) | sign) & 0x07;
+                }
+              
+                if(slideCode == 5)
+                {
+                    slideLocked = !slideLocked;
+                }
+
+                slideLocked = key.fingerNum < 0;
+              
                 SlideTran.transform.localPosition = slideOriginPos + transform.position.x * 20 * Vector3.right;
                 SetCamera(false);
             }
             else if (argus.isInMedia(z))
             {
                 transform.position = new Vector3(argus.FrontPos.x, argus.FrontPos.y, argus.mediaPos);
+
+                bool translateFlag = ((playCode & 0x1) ^ sign) == 1;
+                if (translateFlag)
+                {
+                    playCode = ((playCode << 1) | sign) & 0x07;
+                }
+
+                if (playCode == 5)
+                {
+                    playLocked = !playLocked;
+                }
+
                 Media(key);
             }
             else if (argus.isInBack(z))
             {
                 transform.position = new Vector3(argus.FrontPos.x, argus.FrontPos.y, argus.maxZ);
-                StartCoroutine(CatchAct(key));
+
+                bool translateFlag = ((graspCode & 0x1) ^ sign) == 1;
+                if (translateFlag)
+                {
+                    graspCode = ((graspCode << 1) | sign) & 0x07;
+                }
+
+                if (graspCode == 2)
+                {
+                    graspLocked = true;
+                    grasping = true;
+
+                    StartCoroutine(CatchAct(key));
+                }
             }
             else
             {
@@ -102,10 +161,24 @@ public class Observer : MonoBehaviour
                 transform.position = new Vector3(argus.FrontPos.x, argus.FrontPos.y, z);
                 SetCamera(true);
 
-                if (Catched)
+                bool translateFlag = ((graspCode & 0x1) ^ sign) == 1;
+                if (translateFlag)
                 {
-                    Catched = key.fingerNum <= 2;
+                    graspCode = ((graspCode << 1) | sign) & 0x07;
                 }
+
+                if(graspCode == 7)
+                {
+                    graspCode = 0;
+                    graspLocked = false;
+                    graspReleasing = true;
+                }
+            }
+
+
+            if(slideLocked)
+            {
+                SlideTran.transform.localPosition = slideOriginPos + transform.position.x * 20 * Vector3.right;
             }
 
           
@@ -117,9 +190,7 @@ public class Observer : MonoBehaviour
 
     private void Media(FrameInfoKey key)
     {
-        playFlag = !playFlag || key.fingerNum <= 0;
- 
-        if (playFlag)
+        if (playLocked)
         {
             moviePlayer.Play(true);
             moviePlayer.PlayAudio(true);
@@ -132,7 +203,7 @@ public class Observer : MonoBehaviour
 
     private void Grasp(FrameInfoKey key)
     {
-        if (Catched)
+        if (graspLocked)
         {
             float t = (PicTranPos.z - picTran.position.z) / argus.Depth;
             picTran.position = new Vector3(PicTranPos.x, PicTranPos.y, transform.position.z + (1- 3.03f * t) * offset);
@@ -146,10 +217,9 @@ public class Observer : MonoBehaviour
 
     private IEnumerator Recover()
     {
-        if (!isReleased)
+        if (graspReleasing)
         {
-            isReleased = true;
-            Catched = false;
+            graspReleasing = false;
             float time = 0;
 
             float offset = (PicTranPos - picTran.position).z;
@@ -170,20 +240,15 @@ public class Observer : MonoBehaviour
     private IEnumerator CatchAct(FrameInfoKey key)
     {
 
-        if (!Catched)
+        if (grasping)
         {
-            if (key.fingerNum <= 2)
+            grasping = false;
+            Vector3 pos = picTran.position;
+            for (float time = 0; time <= 0.6f; time += Time.deltaTime)
             {
-                Catched = true;
-                isReleased = false;
-                Vector3 pos = picTran.position;
-                for (float time = 0; time <= 0.6f; time += Time.deltaTime)
-                {
-                    picTran.Translate(0, 0, -1.0f, Space.World);
-                    picTran.position = Vector3.Lerp(pos, pos - 10 * Vector3.forward, time);
-                    yield return new WaitForEndOfFrame();
-                }
-
+                picTran.Translate(0, 0, -1.0f, Space.World);
+                picTran.position = Vector3.Lerp(pos, pos - 10 * Vector3.forward, time);
+                yield return new WaitForEndOfFrame();
             }
         }
     }
