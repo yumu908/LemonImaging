@@ -54,8 +54,7 @@ namespace ExternalDLL
 
         private void ToListener(object obj)
         {
-            StartListener(Collect, 5000);
-            Thread.Sleep(10);
+            StartListener(Collect, 8000);
             if (flag)
             {
                 ThreadPool.QueueUserWorkItem(ToListener);

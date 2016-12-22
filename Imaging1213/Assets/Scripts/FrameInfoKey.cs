@@ -4,7 +4,7 @@ using System.Collections;
 
 namespace ExternalDLL
 {
-
+    [Serializable]
     public class FrameInfoKey
     {
         public Vector3 center;

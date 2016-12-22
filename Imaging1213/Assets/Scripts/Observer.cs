@@ -10,7 +10,8 @@ public class Observer : MonoBehaviour
     public GameObject hand;
     public Transform picTran;
     public Transform SlideTran;
-    public Vector3 test = Vector3.zero;
+    public Transform PlayerBoxTran;
+    public FrameInfoKey test = new FrameInfoKey(Vector3.zero, new Vector3[5], 0);
     public bool testFlag = false;
     public ParamArgus argus = new ParamArgus();
     public MoviePlayer moviePlayer;
@@ -23,8 +24,8 @@ public class Observer : MonoBehaviour
     private Vector3 slideOriginPos;
     private bool isEnterSlide;
     public bool Catched;
-    public bool isReleased;
-    public bool playFlag;
+    public int prevFingerNum;
+
     private Vector3 PicTranPos;
     private float offset;
 
@@ -47,8 +48,8 @@ public class Observer : MonoBehaviour
         PicTranPos = picTran.position;
         animator = picTran.GetComponent<Animator>();
         Catched = false;
-        playFlag = false;
-        isReleased = true;
+
+        prevFingerNum = 0;
         hand.SetActive(false);
         viewer = new Viewer();
         viewer.Start();
@@ -64,11 +65,14 @@ public class Observer : MonoBehaviour
             }
 
             Vector3 center = key.center;
-            Debug.Log(center);
+            if(center != Vector3.zero)
+            Debug.Log(center + "   " + key.fingerNum) ;
 
             bool flag = key.fingerNum > 0;
             Color c = argus.GetColor(transform.position.z);
             mat.SetColor("_Color", c);
+
+            bool isInPic = false;
 
             if (center == Vector3.zero)
             {
@@ -78,38 +82,49 @@ public class Observer : MonoBehaviour
 
             mat.SetColor("_OutlineColor", new Color32(255, 100, 0, 255));
             float z = argus.GetZ(center.z);
-            if (argus.isInSlide(z))
+            if (argus.isInSlide(center.z))
             {
+                SlideTran.root.gameObject.SetActive(true);
                 float x = argus.GetX(center.x);
-                transform.position = new Vector3(x, argus.BackPos.y, argus.slidePos);
+                transform.position = new Vector3(x, argus.BackPos.y, argus.SlidePos);
                 SlideTran.transform.localPosition = slideOriginPos + transform.position.x * 20 * Vector3.right;
                 SetCamera(false);
             }
-            else if (argus.isInMedia(z))
+            else if (argus.isInMedia(center.z))
             {
-                transform.position = new Vector3(argus.FrontPos.x, argus.FrontPos.y, argus.mediaPos);
+                transform.position = new Vector3(argus.FrontPos.x, argus.FrontPos.y, argus.MediaPos);
                 Media(key);
             }
-            else if (argus.isInBack(z))
+            else if (argus.isInBack(center.z))
+            {
+                //transform.position = new Vector3(argus.FrontPos.x, argus.FrontPos.y, argus.maxZ);
+               
+               
+            }
+            else if (argus.isInSlideBack(center.z))
+            {
+                SlideTran.root.gameObject.SetActive(false);
+                transform.position = new Vector3(argus.FrontPos.x, argus.FrontPos.y, z);
+                SetCamera(true);
+            }
+            
+            else if (argus.isInBottom(center.z))
             {
                 transform.position = new Vector3(argus.FrontPos.x, argus.FrontPos.y, argus.maxZ);
                 StartCoroutine(CatchAct(key));
+                isInPic = true;
             }
             else
             {
-                bool active = z <= argus.slidePos + argus.slideScope;
-                SlideTran.root.gameObject.SetActive(active);
+                SlideTran.root.gameObject.SetActive(true);
                 transform.position = new Vector3(argus.FrontPos.x, argus.FrontPos.y, z);
                 SetCamera(true);
 
-                if (Catched)
-                {
-                    Catched = key.fingerNum <= 2;
-                }
             }
 
-          
-            Grasp(key);
+            if(!isInPic)
+               Grasp(key);
+            prevFingerNum = key.fingerNum;
         }
 
 
@@ -117,14 +132,12 @@ public class Observer : MonoBehaviour
 
     private void Media(FrameInfoKey key)
     {
-        playFlag = !playFlag || key.fingerNum <= 0;
- 
-        if (playFlag)
+        if(prevFingerNum > 2  && key.fingerNum <= 2)
         {
             moviePlayer.Play(true);
             moviePlayer.PlayAudio(true);
         }
-        else
+        else if(prevFingerNum <= 2 && key.fingerNum > 2)
         {
             moviePlayer.Stop();
         }
@@ -132,23 +145,22 @@ public class Observer : MonoBehaviour
 
     private void Grasp(FrameInfoKey key)
     {
-        if (Catched)
+        if (Catched && key.fingerNum <= 0)
         {
             float t = (PicTranPos.z - picTran.position.z) / argus.Depth;
-            picTran.position = new Vector3(PicTranPos.x, PicTranPos.y, transform.position.z + (1- 3.03f * t) * offset);
-            picTran.localScale = new Vector3(1 +  4.8f * t, 1 + 4.8f * t, 1);
+            picTran.position = new Vector3(PicTranPos.x, PicTranPos.y, transform.position.z + (1- 2.03f * t) * offset);
+            picTran.localScale = new Vector3(1 +  3.8f * t, 1 + 3.8f * t, 1);
         }
-        else
+        else if (prevFingerNum <= 0 && key.fingerNum > 0)
         {
-            StartCoroutine(Recover());
+            StartCoroutine(Recover(key));
         }
     }
 
-    private IEnumerator Recover()
+    private IEnumerator Recover(FrameInfoKey key)
     {
-        if (!isReleased)
+        if (Catched)
         {
-            isReleased = true;
             Catched = false;
             float time = 0;
 
@@ -169,21 +181,16 @@ public class Observer : MonoBehaviour
 
     private IEnumerator CatchAct(FrameInfoKey key)
     {
-
         if (!Catched)
         {
-            if (key.fingerNum <= 2)
+            Catched = true;
+            Vector3 pos = picTran.position;
+            float z = argus.maxZ + (pos.z - argus.maxZ) * 0.60f;
+            Vector3 target = new Vector3(pos.x, pos.y, z);
+            for (float time = 0; time <= 1.0f; time += Time.deltaTime)
             {
-                Catched = true;
-                isReleased = false;
-                Vector3 pos = picTran.position;
-                for (float time = 0; time <= 0.6f; time += Time.deltaTime)
-                {
-                    picTran.Translate(0, 0, -1.0f, Space.World);
-                    picTran.position = Vector3.Lerp(pos, pos - 10 * Vector3.forward, time);
-                    yield return new WaitForEndOfFrame();
-                }
-
+                picTran.position = Vector3.Lerp(pos, target, time);
+                yield return new WaitForEndOfFrame();
             }
         }
     }
@@ -200,7 +207,7 @@ public class Observer : MonoBehaviour
         else
         {
             Camera.main.transform.SetParent(null);
-            Camera.main.transform.localPosition = new Vector3(-20.63f, 5.53f, -2.15f);
+            Camera.main.transform.localPosition = new Vector3(-20.63f, 5.53f, 4.31f);
             Camera.main.transform.localRotation = Quaternion.Euler(-2.03f, 0.21f, 0);
             Camera.main.transform.localScale = 0.20f * Vector3.one;
         }
@@ -210,6 +217,7 @@ public class Observer : MonoBehaviour
 
     void OnDestroy()
     {
-        viewer.OnStop();
+        if(viewer != null)
+         viewer.OnStop();
     }
 }

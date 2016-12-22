@@ -134,12 +134,22 @@ public class ParamArgus
 
     public bool isInBack(float z)
     {
-        return  z <= maxZ && z >= maxZ - backScope;
+        return z <= back && z >= back - backScope;
     }
 
     public bool isInSlide(float z)
     {
-        return z >= slidePos - slideScope && z <= slidePos + slideScope;
+        return z >= slidePos - slideScope && z < slidePos;
+    }
+
+    public bool isInSlideBack(float z)
+    {
+        return z >= slidePos && z < back - margin;
+    }
+
+    public bool isInBottom(float z)
+    {
+        return z >= back - margin;
     }
 
     public bool isInMedia(float z)
@@ -147,5 +157,20 @@ public class ParamArgus
         return z >= mediaPos - mediaScope && z <= mediaPos;
     }
 
-    
+
+    public float MediaPos
+    {
+        get
+        {
+            return GetZ(mediaPos);
+        }
+    }
+
+    public float SlidePos
+    {
+        get
+        {
+            return GetZ(slidePos);
+        }
+    }
 }
