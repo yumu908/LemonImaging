@@ -145,13 +145,13 @@ public class Observer : MonoBehaviour
 
     private void Grasp(FrameInfoKey key)
     {
-        if (Catched && key.fingerNum <= 0)
+        if (Catched && key.fingerNum <= 2)
         {
             float t = (PicTranPos.z - picTran.position.z) / argus.Depth;
-            picTran.position = new Vector3(PicTranPos.x, PicTranPos.y, transform.position.z + (1- 2.03f * t) * offset);
-            picTran.localScale = new Vector3(1 +  3.8f * t, 1 + 3.8f * t, 1);
+            picTran.position = new Vector3(PicTranPos.x, PicTranPos.y, transform.position.z + (1- 0.25f * t) * offset);
+            picTran.localScale = new Vector3(1 +  2 * t, 1 + 2 * t, 1);
         }
-        else if (prevFingerNum <= 0 && key.fingerNum > 0)
+        else if (prevFingerNum <= 2 && key.fingerNum > 2)
         {
             StartCoroutine(Recover(key));
         }
@@ -187,7 +187,7 @@ public class Observer : MonoBehaviour
             Vector3 pos = picTran.position;
             float z = argus.maxZ + (pos.z - argus.maxZ) * 0.60f;
             Vector3 target = new Vector3(pos.x, pos.y, z);
-            for (float time = 0; time <= 1.0f; time += Time.deltaTime)
+            for (float time = 0; time <= 1.0f; time += 2 * Time.deltaTime)
             {
                 picTran.position = Vector3.Lerp(pos, target, time);
                 yield return new WaitForEndOfFrame();

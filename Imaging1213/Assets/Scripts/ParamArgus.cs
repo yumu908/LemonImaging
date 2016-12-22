@@ -67,7 +67,7 @@ public class ParamArgus
 
     public float Depth
     {
-        get { return back - front; }
+        get { return maxZ - minZ; }
     }
 
     public float dScope
