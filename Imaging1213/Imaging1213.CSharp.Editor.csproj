@@ -150,6 +150,7 @@
     <None Include="Assets\Shaders\SkinShader.shader" />
     <None Include="Assets\Shaders\Transparent.shader" />
     <None Include="Assets\Shaders\handyskin.shader" />
+    <None Include="Assets\Shaders\wireframe.shader" />
     <None Include="Assets\kolmich\KGFCore\readme.txt" />
     <None Include="Assets\kolmich\KGFDebug\readme.txt" />
     <None Include="Assets\kolmich\Resources\KGFSkins\default\readme.txt" />

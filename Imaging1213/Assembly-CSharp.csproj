@@ -61,6 +61,7 @@
      <Compile Include="Assets\Scripts\TestDll.cs" />
      <Compile Include="Assets\Scripts\VRSursor.cs" />
      <Compile Include="Assets\Scripts\Viewer.cs" />
+     <Compile Include="Assets\Scripts\VrState.cs" />
      <Compile Include="Assets\kolmich\KGFCore\KGFAccessor\scripts\KGFAccessor.cs" />
      <Compile Include="Assets\kolmich\KGFCore\KGFCustomGUI\scripts\KGFCustomGUI.cs" />
      <Compile Include="Assets\kolmich\KGFCore\KGFCustomGUI\scripts\KGFCustomGUITutorial.cs" />

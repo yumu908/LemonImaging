@@ -7,6 +7,7 @@ using ExternalDLL;
 public class Observer : MonoBehaviour
 {
     #region public
+    public bool debugMode;
     public GameObject hand;
     public Transform picTran;
     public Transform SlideTran;
@@ -15,22 +16,41 @@ public class Observer : MonoBehaviour
     public bool testFlag = false;
     public ParamArgus argus = new ParamArgus();
     public MoviePlayer moviePlayer;
+    public MeshRenderer btnPointer;
+
+    public MeshRenderer slidePointer;
+    public MeshRenderer graspPointer;
 
     #endregion
 
     #region private
-    private Viewer viewer;
+    public Viewer viewer;
     private Material mat;
     private Vector3 slideOriginPos;
     private bool isEnterSlide;
     public bool Catched;
     public int prevFingerNum;
 
+    public bool playboxFlag;
+
     private Vector3 PicTranPos;
     private float offset;
 
     private Animator animator;
     #endregion
+
+    private Vector3 originCameraPos;
+
+    private Quaternion orignCameraRot;
+
+    private Vector3 cameraPos;
+
+
+    private bool enterSlide;
+    private float enterSlideZPos;
+    private float enterSlideXPos;
+    
+
 
 
     private void Sample(Animation anim)
@@ -49,14 +69,53 @@ public class Observer : MonoBehaviour
         animator = picTran.GetComponent<Animator>();
         Catched = false;
 
+        playboxFlag = false;
+        
         prevFingerNum = 0;
         hand.SetActive(false);
+
+        
+
+        originCameraPos = Camera.main.transform.localPosition;
+        orignCameraRot = Camera.main.transform.localRotation;
+        cameraPos = transform.TransformPoint(originCameraPos);
+
+        Vector3 temp = btnPointer.transform.localScale;
+        temp.z = argus.MediaPointerZScale;
+        btnPointer.transform.localScale = temp;
+
+        temp = btnPointer.transform.localPosition;
+        temp.z = -0.5f * argus.MediaPointerZScale;
+        btnPointer.transform.localPosition = temp;
+
+
+
+        temp = slidePointer.transform.localScale;
+        Vector3 vector = argus.SlidePointerScale;
+        temp.x = vector.x;
+        temp.z = vector.z;
+        slidePointer.transform.localScale = temp;
+
+        temp = slidePointer.transform.localPosition;
+        temp.z = -0.5f * argus.SlidePointerScale.z;
+        slidePointer.transform.localPosition = temp;
+
+
+        temp = graspPointer.transform.localScale;
+        temp.z = 0.2f * argus.GraspPointerZScale;
+        graspPointer.transform.localScale = temp;
+
+        temp = graspPointer.transform.localPosition;
+        temp.z = -0.1f * argus.GraspPointerZScale;
+        graspPointer.transform.localPosition = temp;
+
         viewer = new Viewer();
         viewer.Start();
     }
+
     void Update()
     {
-        FrameInfoKey key = viewer.OnUpdate();
+        FrameInfoKey key = viewer.OnUpdate(argus.meidaDecimals);
         if (key != null)
         {
             if (!hand.activeSelf)
@@ -64,15 +123,18 @@ public class Observer : MonoBehaviour
                 hand.SetActive(true);
             }
 
+       
             Vector3 center = key.center;
             if(center != Vector3.zero)
             Debug.Log(center + "   " + key.fingerNum) ;
 
             bool flag = key.fingerNum > 0;
-            Color c = argus.GetColor(transform.position.z);
+            Color c = argus.GetColor(key.center.z);
             mat.SetColor("_Color", c);
 
             bool isInPic = false;
+            bool isCameraMove = true;
+
 
             if (center == Vector3.zero)
             {
@@ -82,48 +144,127 @@ public class Observer : MonoBehaviour
 
             mat.SetColor("_OutlineColor", new Color32(255, 100, 0, 255));
             float z = argus.GetZ(center.z);
-            if (argus.isInSlide(center.z))
+
+            bool prevEnterSlide = enterSlide;
+            enterSlide = argus.isInSlide(center.z);
+
+
+            if (enterSlide)
             {
-                SlideTran.root.gameObject.SetActive(true);
-                float x = argus.GetX(center.x);
-                transform.position = new Vector3(x, argus.BackPos.y, argus.SlidePos);
-                SlideTran.transform.localPosition = slideOriginPos + transform.position.x * 20 * Vector3.right;
-                SetCamera(false);
-            }
-            else if (argus.isInMedia(center.z))
-            {
-                transform.position = new Vector3(argus.FrontPos.x, argus.FrontPos.y, argus.MediaPos);
-                Media(key);
-            }
-            else if (argus.isInBack(center.z))
-            {
-                //transform.position = new Vector3(argus.FrontPos.x, argus.FrontPos.y, argus.maxZ);
-               
-               
-            }
-            else if (argus.isInSlideBack(center.z))
-            {
-                SlideTran.root.gameObject.SetActive(false);
-                transform.position = new Vector3(argus.FrontPos.x, argus.FrontPos.y, z);
-                SetCamera(true);
-            }
-            
-            else if (argus.isInBottom(center.z))
-            {
-                transform.position = new Vector3(argus.FrontPos.x, argus.FrontPos.y, argus.maxZ);
-                StartCoroutine(CatchAct(key));
-                isInPic = true;
+                float x = argus.GetX(center.x) - argus.GetX(argus.xMid);
+                if (enterSlide != prevEnterSlide)
+                {
+                    enterSlideXPos = argus.BackPos.x;
+                    enterSlideZPos = z;
+                }
+
+              
+
+              
+                if (Catched)
+                {
+                    transform.position = new Vector3(argus.BackPos.x, argus.BackPos.y, z);
+                }
+                else
+                {
+                    transform.position = new Vector3(argus.BackPos.x + x, argus.BackPos.y, enterSlideZPos);
+                    SlideTran.transform.localPosition = slideOriginPos + x * 32 * Vector3.right;
+                    isCameraMove = false;
+                }
+
+
+                if (debugMode)
+                {
+                    slidePointer.gameObject.SetActive(true);
+                    slidePointer.material.SetColor("_LineColor", Color.red);
+                }
+ 
             }
             else
             {
-                SlideTran.root.gameObject.SetActive(true);
-                transform.position = new Vector3(argus.FrontPos.x, argus.FrontPos.y, z);
-                SetCamera(true);
+                if (argus.isInMedia(center.z))
+                {
+
+                    transform.position = new Vector3(argus.FrontPos.x, argus.FrontPos.y, argus.MediaMiddle);
+
+
+                    if (debugMode)
+                    {
+                        btnPointer.gameObject.SetActive(true);
+                        btnPointer.material.SetColor("_LineColor", Color.red);
+                    }
+
+                    Media(key);
+                }
+                //else if (argus.isInBack(center.z))
+                //{
+                //    //transform.position = new Vector3(argus.FrontPos.x, argus.FrontPos.y, argus.maxZ);
+               
+               
+                //}
+                //else if (argus.isInSlideBack(center.z))
+                //{
+
+                //    (false);
+                //    transform.position = new Vector3(argus.FrontPos.x, argus.FrontPos.y, z);
+
+                //}
+
+                else if (argus.isInBottom(center.z))
+                {
+           
+                    transform.position = new Vector3(argus.FrontPos.x, argus.FrontPos.y, z);
+                    isInPic = true;
+                    if (argus.BackHit(viewer.ResultCode))
+                    {
+                        StartCoroutine(CatchAct(key));
+                    }
+
+                    if (Catched)
+                    {
+                    
+                    }
+
+                    if (debugMode)
+                    {
+                        graspPointer.gameObject.SetActive(true);
+                        graspPointer.material.SetColor("_LineColor", Color.red);
+                    }
+                }
+                else
+                {
+    
+                    transform.position = new Vector3(argus.FrontPos.x, argus.FrontPos.y, z);
+
+                    if (debugMode)
+                    {
+                        btnPointer.material.SetColor("_LineColor", Color.gray);
+                        slidePointer.material.SetColor("_LineColor", Color.gray);
+                        graspPointer.material.SetColor("_LineColor", Color.gray);
+                    }
+
+
+                }
 
             }
+           
+            if(!debugMode)
+            {
+                btnPointer.gameObject.SetActive(false);
+                slidePointer.gameObject.SetActive(false);
+                graspPointer.gameObject.SetActive(false);
+            }
 
-            if(!isInPic)
-               Grasp(key);
+            Grasp(key);
+
+            if (argus.BackHit(viewer.ResultCode) && !isInPic)
+            {
+                StartCoroutine(Recover(key));
+            }
+
+
+            cameraPos = Camera.main.transform.position;
+            SetCamera(isCameraMove);
             prevFingerNum = key.fingerNum;
         }
 
@@ -132,28 +273,32 @@ public class Observer : MonoBehaviour
 
     private void Media(FrameInfoKey key)
     {
-        if(prevFingerNum > 2  && key.fingerNum <= 2)
+        if (argus.MeidaHit(viewer.ResultCode))
         {
-            moviePlayer.Play(true);
-            moviePlayer.PlayAudio(true);
-        }
-        else if(prevFingerNum <= 2 && key.fingerNum > 2)
-        {
-            moviePlayer.Stop();
+            if (!Catched)
+            {
+                playboxFlag = !playboxFlag;
+                if (playboxFlag)
+                {
+                    moviePlayer.Play(true);
+                    moviePlayer.PlayAudio(true);
+                }
+                else
+                {
+                    moviePlayer.Stop();
+                }
+            }
         }
     }
 
     private void Grasp(FrameInfoKey key)
     {
-        if (Catched && key.fingerNum <= 2)
+        if (Catched)
         {
             float t = (PicTranPos.z - picTran.position.z) / argus.Depth;
-            picTran.position = new Vector3(PicTranPos.x, PicTranPos.y, transform.position.z + (1- 0.25f * t) * offset);
-            picTran.localScale = new Vector3(1 +  2 * t, 1 + 2 * t, 1);
-        }
-        else if (prevFingerNum <= 2 && key.fingerNum > 2)
-        {
-            StartCoroutine(Recover(key));
+
+            picTran.position = new Vector3(PicTranPos.x, PicTranPos.y, transform.position.z + Mathf.Clamp01(1 - 0.25f * t) * offset);
+            picTran.localScale = new Vector3(1 + Mathf.Clamp01(2 * t), 1 + Mathf.Clamp01(2 * t), 1);
         }
     }
 
@@ -199,17 +344,25 @@ public class Observer : MonoBehaviour
     {
         if (hasParent)
         {
-            Camera.main.transform.SetParent(transform, true);
-            Camera.main.transform.localPosition = new Vector3(39.46f, -18f, 0.53f);
-            Camera.main.transform.localRotation = Quaternion.Euler(130.75f, 91.52f, 1.14f);
-            Camera.main.transform.localScale = Vector3.one;
+            if (!Camera.main.transform.parent)
+            {
+                Camera.main.transform.SetParent(transform);
+                Camera.main.transform.localPosition = originCameraPos;
+                Camera.main.transform.localRotation = orignCameraRot;
+                Camera.main.transform.localScale = Vector3.one;
+            }
+
         }
         else
         {
-            Camera.main.transform.SetParent(null);
-            Camera.main.transform.localPosition = new Vector3(-20.63f, 5.53f, 4.31f);
-            Camera.main.transform.localRotation = Quaternion.Euler(-2.03f, 0.21f, 0);
-            Camera.main.transform.localScale = 0.20f * Vector3.one;
+            if (Camera.main.transform.parent)
+            {
+                Camera.main.transform.SetParent(null);
+                Camera.main.transform.localScale = 0.20f * Vector3.one;
+                Vector3 vector = Camera.main.transform.position;
+                Camera.main.transform.position = new Vector3(-20.54565f, vector.y, vector.z);
+            }
+
         }
        
 

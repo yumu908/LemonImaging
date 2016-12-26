@@ -26,48 +26,60 @@ namespace ExternalDLL
         public Queue<FrameInfoKey> queue;
         private bool flag;
 
+		public int resultCode;
+
+        public int ResultCode
+        {
+            get { return resultCode; }
+        }
+
+        private Thread thread;
+
         public void Start()
         {
             queue = new Queue<FrameInfoKey>(30);
             flag = true;
-            ThreadPool.QueueUserWorkItem(ToListener);
+			resultCode = 0;
+            thread = new Thread(ToListener);
+            thread.Start();
         }
 
 
-        public FrameInfoKey OnUpdate()
+		public FrameInfoKey OnUpdate(int n)
         {
-            //while (thread.ThreadState == ThreadState.Stopped)
-            //{
-            //    thread.Start();
-            //}
-
-
             if (queue.Count > 0)
             {
-               return queue.Dequeue();
+				FrameInfoKey key = queue.Dequeue();
+				int sign = key.fingerNum > 0 ? 1 : 0;
+                int translate = (n << 1);
+				int code = (1 << translate) - 1;
+                Debug.LogError(translate + "    " + code + "     " + sign + "    " + resultCode);
+                resultCode = ((resultCode << 1) | sign) & code;
+
+				return key;
             }
+
 
             return null;
         }
 
 
 
-        private void ToListener(object obj)
+        private void ToListener()
         {
-            StartListener(Collect, 8000);
-            if (flag)
+            while (flag)
             {
-                ThreadPool.QueueUserWorkItem(ToListener);
+                StartListener(Collect, 5000);
+                Thread.Sleep(10);
             }
         }
 
         public void Collect(FrameInfo frameInfo)
         {
-            Act direct = Act.ForwardToPlay;
-            //if (frameInfo.fingerNum < 0 || frameInfo.center == Vector3.zero)
-            //{
-            //    return;
-            //}
+            if (frameInfo.fingerNum < 0)
+            {
+                return;
+            }
 
             int size = Marshal.SizeOf(typeof(Point3F));
             Vector3[] points = new Vector3[5];
@@ -87,6 +99,7 @@ namespace ExternalDLL
         {
             flag = false;
             Thread.Sleep(10);
+            thread.Abort();
         }
        
     }

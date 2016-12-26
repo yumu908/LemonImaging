@@ -22,8 +22,8 @@ public class ParamArgus
     public float back;
 
     // 滑块Z轴活动范围
-    [Range(0, 100)]
-    public float backScope;
+    //[Range(0, 100)]
+    //public float backScope;
 
     //间隔
     public float margin;
@@ -56,6 +56,14 @@ public class ParamArgus
     //U3D中对应的X最大和最小值
     public float maxX;
     public float minX;
+
+    [Range(1, 3)]
+    public int meidaDecimals = 1;
+
+    [Range(1, 3)]
+    public int backDecimals = 1;
+
+
 
     public float xMid
     {
@@ -93,13 +101,13 @@ public class ParamArgus
     public Color GetColor(float z)
     {
 
-        if (z < minZ)
+        if (z < front)
         {
             return frontColor;
         }
         else if (z < mediaPos)
         {
-            float t = (z - minZ) /(mediaPos - minZ);
+            float t = (z - front) / (mediaPos - front);
             return Color.Lerp(frontColor, mediaColor, t);
         }
         else if (z < slidePos)
@@ -107,9 +115,9 @@ public class ParamArgus
             float t = (z - mediaPos) / (slidePos - mediaPos);
             return Color.Lerp(mediaColor, slideColor, t);
         }
-        else if (z < maxZ)
+        else if (z < back)
         {
-            float t = (z - slidePos)/(maxZ - slidePos);
+            float t = (z - slidePos)/(back - slidePos);
             return Color.Lerp(slideColor, backColor, t);
         }
         else
@@ -128,14 +136,14 @@ public class ParamArgus
 
     public float GetX(float x)
     {
-        float result = wScope * (x - xMid) + wIntercept;
-        return Mathf.Clamp(result - BackPos.x, minX, maxX);
+        float result = wScope * x + wIntercept;
+        return Mathf.Clamp(result , minX, maxX);
     }
 
-    public bool isInBack(float z)
-    {
-        return z <= back && z >= back - backScope;
-    }
+    //public bool isInBack(float z)
+    //{
+    //    return z <= back && z >= back - backScope;
+    //}
 
     public bool isInSlide(float z)
     {
@@ -172,5 +180,59 @@ public class ParamArgus
         {
             return GetZ(slidePos);
         }
+    }
+
+    public bool MeidaHit(int code)
+    {
+        int opt = 1 << meidaDecimals - 1;
+        return code == (opt << meidaDecimals);
+    }
+
+    public bool BackHit(int code)
+    {
+        int opt = 1 << backDecimals - 1;
+        return code == (opt << backDecimals);
+    }
+
+
+    public float MediaPointerZScale
+    {
+        get { return 0.1f * (GetZ(mediaPos) - GetZ(mediaPos - mediaScope)); }
+    }
+
+    public Vector3 SlidePointerCenter
+    {
+        get
+        {
+            return new Vector3(FrontPos.x, FrontPos.y, GetZ(slidePos - 0.5f * slideScope));
+        }
+    }
+
+    public Vector3 SlidePointerScale
+    {
+        get
+        {
+            float xScale = GetX(right) - GetX(left);
+            float zScale = (GetZ(slidePos) - GetZ(slidePos - slideScope));
+            return new Vector3(30 * xScale, 1, 2 * zScale);
+        }
+    }
+
+
+    public float GraspPointerZScale
+    {
+        get
+        {
+            return GetZ(back) - GetZ(back - margin);
+        }
+    }
+
+    public float MediaMiddle
+    {
+        get
+        {
+            return  0.5f * (GetZ(mediaPos) + GetZ(mediaPos - mediaScope));
+        }
+
     }
 }
