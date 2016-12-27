@@ -50,12 +50,12 @@ namespace ExternalDLL
             if (queue.Count > 0)
             {
 				FrameInfoKey key = queue.Dequeue();
-				int sign = key.fingerNum > 0 ? 1 : 0;
+				int sign = key.fingerNum > 2 ? 1 : 0;
                 int translate = (n << 1);
 				int code = (1 << translate) - 1;
-                Debug.LogError(translate + "    " + code + "     " + sign + "    " + resultCode);
+      
                 resultCode = ((resultCode << 1) | sign) & code;
-
+                Debug.LogError(key.fingerNum + "     " + sign + "    " + resultCode);
 				return key;
             }
 

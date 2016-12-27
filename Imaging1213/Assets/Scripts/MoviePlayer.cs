@@ -32,6 +32,7 @@ public class MoviePlayer : MonoBehaviour {
         audioIsPlay = false;
         image.sprite = playSprite;
         audioImage.sprite = audioPlaySprite;
+  
     }
 
     public void Play(bool flag)

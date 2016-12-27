@@ -49,8 +49,8 @@ public class Observer : MonoBehaviour
     private bool enterSlide;
     private float enterSlideZPos;
     private float enterSlideXPos;
-    
 
+    private int frameNum = 0;
 
 
     private void Sample(Animation anim)
@@ -74,7 +74,7 @@ public class Observer : MonoBehaviour
         prevFingerNum = 0;
         hand.SetActive(false);
 
-        
+        argus.Init();
 
         originCameraPos = Camera.main.transform.localPosition;
         orignCameraRot = Camera.main.transform.localRotation;
@@ -108,6 +108,8 @@ public class Observer : MonoBehaviour
         temp = graspPointer.transform.localPosition;
         temp.z = -0.1f * argus.GraspPointerZScale;
         graspPointer.transform.localPosition = temp;
+
+        enterSlideXPos = argus.FrontPos.x;
 
         viewer = new Viewer();
         viewer.Start();
@@ -151,10 +153,10 @@ public class Observer : MonoBehaviour
 
             if (enterSlide)
             {
-                float x = argus.GetX(center.x) - argus.GetX(argus.xMid);
+                float x = argus.GetX(center.x) - argus.GetX(enterSlideXPos);
                 if (enterSlide != prevEnterSlide)
                 {
-                    enterSlideXPos = argus.BackPos.x;
+                    enterSlideXPos = center.x;
                     enterSlideZPos = z;
                 }
 
@@ -167,8 +169,8 @@ public class Observer : MonoBehaviour
                 }
                 else
                 {
-                    transform.position = new Vector3(argus.BackPos.x + x, argus.BackPos.y, enterSlideZPos);
-                    SlideTran.transform.localPosition = slideOriginPos + x * 32 * Vector3.right;
+                    transform.position = new Vector3(argus.FrontPos.x + x, argus.BackPos.y, argus.SlidePos);
+                    SlideTran.transform.localPosition = slideOriginPos + x * argus.slideSpeed * Vector3.right;
                     isCameraMove = false;
                 }
 
@@ -185,8 +187,15 @@ public class Observer : MonoBehaviour
                 if (argus.isInMedia(center.z))
                 {
 
-                    transform.position = new Vector3(argus.FrontPos.x, argus.FrontPos.y, argus.MediaMiddle);
-
+                    if (frameNum > 0)
+                    {
+                        transform.position = new Vector3(argus.FrontPos.x, argus.FrontPos.y, argus.MediaMiddle);
+    
+                    }
+                    else
+                    {
+                        transform.position = new Vector3(argus.FrontPos.x, argus.FrontPos.y, z);
+                    }
 
                     if (debugMode)
                     {
@@ -218,11 +227,6 @@ public class Observer : MonoBehaviour
                     if (argus.BackHit(viewer.ResultCode))
                     {
                         StartCoroutine(CatchAct(key));
-                    }
-
-                    if (Catched)
-                    {
-                    
                     }
 
                     if (debugMode)
@@ -266,6 +270,9 @@ public class Observer : MonoBehaviour
             cameraPos = Camera.main.transform.position;
             SetCamera(isCameraMove);
             prevFingerNum = key.fingerNum;
+
+            frameNum--;
+            frameNum = Mathf.Clamp(frameNum, 0, 120);
         }
 
 
@@ -275,6 +282,7 @@ public class Observer : MonoBehaviour
     {
         if (argus.MeidaHit(viewer.ResultCode))
         {
+            frameNum += 60;
             if (!Catched)
             {
                 playboxFlag = !playboxFlag;

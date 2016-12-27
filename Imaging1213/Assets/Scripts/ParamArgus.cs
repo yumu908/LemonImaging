@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+using System.Runtime.InteropServices;
 
 
 [Serializable]
@@ -63,6 +64,8 @@ public class ParamArgus
     [Range(1, 3)]
     public int backDecimals = 1;
 
+    public float slideSpeed = 40;
+
 
 
     public float xMid
@@ -76,26 +79,6 @@ public class ParamArgus
     public float Depth
     {
         get { return maxZ - minZ; }
-    }
-
-    public float dScope
-    {
-         get { return (maxZ - minZ) /(back - front); }
-    }
-
-    public float dIntercept
-    {
-        get { return maxZ - dScope * back; }
-    }
-
-    public float wScope
-    {
-        get { return (maxX - minX) / (right - left); }
-    }
-
-    public float wIntercept
-    {
-        get { return maxX - wScope * right; }
     }
 
     public Color GetColor(float z)
@@ -130,13 +113,13 @@ public class ParamArgus
 
     public float GetZ(float z)
     {
-        float result = dScope * z + dIntercept;
+        float result = zCurve.Evaluate(z);
         return  Mathf.Clamp(result, minZ, maxZ);
     }
 
     public float GetX(float x)
     {
-        float result = wScope * x + wIntercept;
+        float result = xCurve.Evaluate(x);
         return Mathf.Clamp(result , minX, maxX);
     }
 
@@ -231,8 +214,20 @@ public class ParamArgus
     {
         get
         {
-            return  0.5f * (GetZ(mediaPos) + GetZ(mediaPos - mediaScope));
+            return  0.5f * GetZ(mediaPos  - 0.5f * mediaScope);
         }
 
     }
+
+
+    public AnimationCurve zCurve;
+    public AnimationCurve xCurve;
+
+
+    public void Init()
+    {
+        zCurve = AnimationCurve.EaseInOut(front, minZ, back, maxZ);
+        xCurve = AnimationCurve.EaseInOut(left, minX, right, maxX);
+    }
+
 }
